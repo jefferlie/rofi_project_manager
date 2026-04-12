@@ -1,4 +1,5 @@
 #!/usr/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)"
 
-source /home/laplas14/Projects/rofi_projects_manager/.venv/bin/activate
-python3 /home/laplas14/Projects/rofi_projects_manager/main.py
+source $SCRIPT_DIR/.venv/bin/activate
+python3 $SCRIPT_DIR/main.py
