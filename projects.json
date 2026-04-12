@@ -1,14 +1,14 @@
 [
     {
-        "label": "Rofi Projects Manager",
-        "path": "/home/laplas14/Projects/rofi_projects_manager/"
-    },
-    {
         "label": "Robot from Rick and Morty",
         "path": "/home/laplas14/Projects/rick_robot"
     },
     {
         "label": "Sans Terminal",
         "path": "/home/laplas14/Projects/sans_terminal/"
+    },
+    {
+        "label": "Rofi Projects Manager",
+        "path": "/home/laplas14/Projects/rofi_projects_manager/"
     }
 ]

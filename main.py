@@ -8,7 +8,10 @@ import os
 
 from config import *
 
-projects: list[dict[str, str]] = []
+
+type Project = dict[str, str]
+
+projects: list[Project] = []
 r = Rofi()
 
 
@@ -24,7 +27,7 @@ def load_proj_list() -> None:
         raise Exception
 
 
-def update_proj_list(proj: dict[str, str], remove: bool = False) -> None:
+def update_proj_list(proj: Project, remove: bool = False) -> Project | None:
     if proj in projects:
         projects.remove(proj)
 
@@ -34,8 +37,10 @@ def update_proj_list(proj: dict[str, str], remove: bool = False) -> None:
     with open(PROJECTS_FILE, 'w') as f:
         json.dump(projects, f, indent=4)
 
+    return proj if not remove else None
 
-def open_project(proj: dict[str, str] | None) -> None:
+
+def open_project(proj: Project | None) -> None:
     if proj is None:
         return
 
@@ -50,7 +55,7 @@ def open_project(proj: dict[str, str] | None) -> None:
     ))
 
 
-def _validate_proj(proj: dict[str, str | Path]) -> dict[str, str]:
+def _validate_proj(proj: dict[str, str | Path]) -> Project:
     return {'label': str(proj['label']), 'path': str(proj['path'])}
 
 
@@ -150,7 +155,7 @@ def _rofi_skip_impl(name: str) -> bool:
     return not skip and (q != -1)
 
 
-def rofi_proj_manager() -> dict[str, str] | None:
+def rofi_proj_manager() -> Project | None:
     match (r.select("Select option",
            (
                'Select Project',
@@ -174,9 +179,9 @@ def rofi_proj_manager() -> dict[str, str] | None:
 
                 _remove_dir(Path(projects[idx]['path']))
 
-            update_proj_list(proj=projects[idx], remove=bool(x))
+            project = update_proj_list(proj=projects[idx], remove=bool(x))
 
-            return projects[idx] if not x else None
+            return project
 
         case 1:
             label = _rofi_choose_name()
