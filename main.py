@@ -8,11 +8,8 @@ import os
 
 from config import *
 
-
-type Project = dict[str, str]
-
 projects: list[Project] = []
-r = Rofi()
+r = Rofi(rofi_args=(['-theme', str(ROFI_THEME)] if ROFI_THEME is not None else None))
 
 
 def load_proj_list() -> None:
@@ -35,7 +32,7 @@ def update_proj_list(proj: Project, remove: bool = False) -> Project | None:
         projects.insert(0, proj)
 
     with open(PROJECTS_FILE, 'w') as f:
-        json.dump(projects, f, indent=4)
+        json.dump([_validate_proj(proj=proj) for proj in projects], f, indent=4)
 
     return proj if not remove else None
 
@@ -55,9 +52,11 @@ def open_project(proj: Project | None) -> None:
     ))
 
 
-def _validate_proj(proj: dict[str, str | Path]) -> Project:
+def _validate_proj(proj: Project) -> dict[str, str]:
     return {'label': str(proj['label']), 'path': str(proj['path'])}
 
+def _copy_dir(path: Path) -> bool:
+    ...
 
 def _create_dir(path: Path) -> bool:
     try:
@@ -75,9 +74,19 @@ def _remove_dir(path: Path) -> bool:
         shutil.rmtree(path=path)
         return True
 
+    except FileNotFoundError:
+        return True
+
     except Exception as ex:
         raise ex
 
+def _rofi_remove_project(project: Project) -> None:
+    if not _rofi_confirm():
+        return None
+
+    _exec_implementations(project=project, impl_type='remove')
+
+    _remove_dir(Path(project['path']))
 
 def _rofi_choose_name() -> str | None:
     proj_labels = [proj['label'] for proj in projects]
@@ -113,6 +122,18 @@ def _rofi_choose_path(path: Path = DEFAULT_PATH) -> Path | None:
 
     return None
 
+def _exec_implementations(project: Project, impl_type: str) -> None:
+    if impl_type not in ADDITIONAL_IMPLEMENTATIONS:
+        return
+
+    for name, impl, optional in ADDITIONAL_IMPLEMENTATIONS[impl_type]:
+        if not optional:
+            impl(project)
+
+        elif optional and _rofi_skip_impl(name):
+            impl(project)
+
+
 
 def _rofi_create_project(project: dict[str, Path]) -> str | None:
     dir_name = r.text_entry("󰉗 Directory name")
@@ -133,12 +154,7 @@ def _rofi_create_project(project: dict[str, Path]) -> str | None:
 
     project['path'] = project['path'] / dir_name
 
-    for name, impl, optional in ADDITIONAL_IMPLEMENTATIONS['create']:
-        if not optional:
-            impl(project)
-
-        elif optional and _rofi_skip_impl(name):
-            impl(project)
+    _exec_implementations(project=project, impl_type='create')
 
     return dir_name
 
@@ -173,13 +189,12 @@ def rofi_proj_manager() -> Project | None:
             if q:
                 return None
 
+            project = projects[idx]
+
             if x:
-                if not _rofi_confirm():
-                    return None
+                _rofi_remove_project(project)
 
-                _remove_dir(Path(projects[idx]['path']))
-
-            project = update_proj_list(proj=projects[idx], remove=bool(x))
+            project = update_proj_list(proj=project, remove=bool(x))
 
             return project
 
@@ -190,7 +205,7 @@ def rofi_proj_manager() -> Project | None:
 
             match (r.select("Select option",
                             ('Create new project',
-                             'Import exsiting project'))[0]):
+                             'Import existing project'))[0]):
                 case x if x in (0, 1):
                     path = _rofi_choose_path()
                     if path is None:
@@ -207,9 +222,9 @@ def rofi_proj_manager() -> Project | None:
                         if not _rofi_confirm():
                             return None
 
-                    update_proj_list(proj=_validate_proj(proj=project))
+                    update_proj_list(proj=project)
 
-                    return _validate_proj(project)
+                    return project
 
                 case _:
                     return None
