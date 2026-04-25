@@ -16,6 +16,11 @@ def load_proj_list() -> None:
     global projects
 
     try:
+        if not os.path.exists(PROJECTS_FILE):
+            with open(PROJECTS_FILE, 'w') as f:
+                json.dump(projects, f)
+            return
+
         with open(PROJECTS_FILE) as f:
             projects = json.load(f)
 
