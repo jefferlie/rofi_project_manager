@@ -6,9 +6,13 @@ import shlex
 
 type Project = dict[str, str | Path]
 
+_CONFIG_PATH: Path = Path(os.path.join(os.path.expanduser("~"), ".config", "rofi_pm"))
+
+if not os.path.exists(_CONFIG_PATH):
+    os.mkdir(_CONFIG_PATH)
 
 #NOTE:Required Parameters (Must be filled)
-PROJECTS_FILE: Path = Path(__file__).parent / "projects.json"
+PROJECTS_FILE: Path = _CONFIG_PATH / "projects.json"
 PROJ_OPEN_COMMAND: str = "alacritty --title \"{}\" --working-directory \"{}\" "
 DEFAULT_PATH: Path = Path(os.path.join(os.path.expanduser("~"), "Projects"))
 
